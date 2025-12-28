@@ -70,12 +70,35 @@ Example: `MOT-20241215-143052-A7B2K`
 
 Vehicle data, cities, and personal accident slabs can be modified in `config/vehicleData.ts`.
 
-## Notification Integration
+## Email Notifications
 
-The notification functions in `lib/notifications.ts` are stubs. Replace them with actual API integrations:
+The system sends emails when a quotation is finalized:
 
-- `sendEmailNotification()`: Integrate with SendGrid, AWS SES, etc.
-- `sendWhatsAppNotification()`: Integrate with WhatsApp Business API
+1. **Internal Team Email**: Sent to your team with all lead details
+2. **Customer Email**: Sent to customer with reference number and quotation summary
+
+### Setup Email Service
+
+See `EMAIL_SETUP.md` for detailed instructions. Quick setup:
+
+1. Choose a provider (Nodemailer, SendGrid, AWS SES, or Resend)
+2. Install the package: `npm install [package-name]`
+3. Create `.env.local` with your credentials
+4. Update `lib/emailService.ts` to use your provider
+
+**Example with Gmail (Nodemailer):**
+```env
+TEAM_EMAIL=motor-team@yourcompany.com
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=587
+SMTP_USER=your-email@gmail.com
+SMTP_PASSWORD=your-app-password
+SMTP_FROM=noreply@yourcompany.com
+```
+
+### WhatsApp Integration
+
+WhatsApp notifications are stubs. Integrate with WhatsApp Business API in `lib/notifications.ts`.
 
 ## GitHub Setup
 

@@ -38,23 +38,63 @@ export interface LeadData {
 
 /**
  * Send email notification to internal team
- * This is a stub function - replace with actual email API integration
+ * Calls the API route which handles actual email sending
  */
 export async function sendEmailNotification(leadData: LeadData): Promise<boolean> {
   try {
-    // In production, integrate with email service (SendGrid, AWS SES, etc.)
-    console.log('📧 Email Notification:', {
+    // Call the Next.js API route to send email
+    const response = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'team',
+        leadData,
+      }),
+    });
+    
+    const result = await response.json();
+    return result.success || false;
+  } catch (error) {
+    console.error('Email notification failed:', error);
+    // Fallback to console log in development
+    console.log('📧 Email Notification (Fallback):', {
       to: 'motor-team@insurancecompany.com',
       subject: `New Motor Insurance Lead - ${leadData.referenceNumber}`,
       body: formatEmailBody(leadData),
     });
+    return false;
+  }
+}
+
+/**
+ * Send email notification to customer
+ * Calls the API route which handles actual email sending
+ */
+export async function sendEmailToCustomer(leadData: LeadData): Promise<boolean> {
+  try {
+    // Only send if customer provided email
+    if (!leadData.customerDetails.email) {
+      return false;
+    }
     
-    // Simulate API call
-    await new Promise(resolve => setTimeout(resolve, 100));
+    // Call the Next.js API route to send email
+    const response = await fetch('/api/send-email', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        type: 'customer',
+        leadData,
+      }),
+    });
     
-    return true;
+    const result = await response.json();
+    return result.success || false;
   } catch (error) {
-    console.error('Email notification failed:', error);
+    console.error('Customer email notification failed:', error);
     return false;
   }
 }

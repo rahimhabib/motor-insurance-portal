@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { vehicleData } from '@/config/vehicleData';
 import { calculateQuotation, QuotationInput } from '@/lib/quotation';
 import { generateReferenceNumber } from '@/lib/referenceGenerator';
-import { createLead, sendEmailNotification, sendWhatsAppNotification, LeadData } from '@/lib/notifications';
+import { createLead, sendEmailNotification, sendEmailToCustomer, sendWhatsAppNotification, LeadData } from '@/lib/notifications';
 import { coverageInfo, addOnInfo } from '@/lib/coverageInfo';
 import styles from '@/styles/QuotationForm.module.css';
 
@@ -200,7 +200,11 @@ export default function QuotationForm() {
     const lead = createLead(leadData);
     
     // Send notifications
+    // Send to internal team
     await sendEmailNotification(lead);
+    // Send to customer (if email provided)
+    await sendEmailToCustomer(lead);
+    // Send WhatsApp notification (optional)
     await sendWhatsAppNotification(lead);
     
     setIsSubmitting(false);
