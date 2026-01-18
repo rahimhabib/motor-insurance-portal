@@ -11,6 +11,7 @@ import styles from '@/styles/QuotationForm.module.css';
 interface FormData {
   // Step 1: Vehicle Details
   vehicleType: string;
+  vehicleTypeOther: string; // For "Other" vehicle type input
   make: string;
   model: string;
   modelYear: number;
@@ -41,6 +42,7 @@ export default function QuotationForm() {
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState<FormData>({
     vehicleType: 'Car',
+    vehicleTypeOther: '',
     make: '',
     model: '',
     modelYear: new Date().getFullYear(),
@@ -132,7 +134,8 @@ export default function QuotationForm() {
   const validateStep = (step: number): boolean => {
     switch (step) {
       case 1:
-        return !!(formData.make && formData.model && formData.modelYear && formData.city && formData.sumInsured > 0);
+        const vehicleTypeValid = formData.vehicleType !== 'Other' || (formData.vehicleType === 'Other' && formData.vehicleTypeOther.trim() !== '');
+        return !!(vehicleTypeValid && formData.make && formData.model && formData.modelYear && formData.city && formData.sumInsured > 0);
       case 2:
         return !!(formData.fullName && formData.mobile);
       case 3:
@@ -169,6 +172,7 @@ export default function QuotationForm() {
     const leadData: Omit<LeadData, 'status' | 'assignedTo' | 'timestamp'> = {
       referenceNumber: refNumber,
       vehicleDetails: {
+        vehicleType: formData.vehicleType === 'Other' ? formData.vehicleTypeOther : formData.vehicleType,
         make: formData.make,
         model: formData.model,
         modelYear: formData.modelYear,
@@ -217,38 +221,65 @@ export default function QuotationForm() {
       
       <div className={styles.formGroup}>
         <label>Vehicle Type *</label>
-        <select value={formData.vehicleType} disabled>
-          <option>Car</option>
+        <select 
+          value={formData.vehicleType} 
+          onChange={(e) => {
+            handleInputChange('vehicleType', e.target.value);
+            if (e.target.value !== 'Other') {
+              handleInputChange('vehicleTypeOther', '');
+            }
+          }}
+          required
+        >
+          <option value="Car">Car</option>
+          <option value="Other">Other</option>
         </select>
+        {formData.vehicleType === 'Other' && (
+          <input
+            type="text"
+            value={formData.vehicleTypeOther}
+            onChange={(e) => handleInputChange('vehicleTypeOther', e.target.value)}
+            placeholder="Enter vehicle type"
+            className={styles.otherInput}
+            required
+            style={{ marginTop: '10px' }}
+          />
+        )}
       </div>
       
       <div className={styles.formGroup}>
         <label>Make *</label>
-        <select
+        <input
+          type="text"
+          list="make-list"
           value={formData.make}
           onChange={(e) => handleInputChange('make', e.target.value)}
+          placeholder="Select or type make"
           required
-        >
-          <option value="">Select Make</option>
+        />
+        <datalist id="make-list">
           {vehicleData.makes.map(make => (
-            <option key={make} value={make}>{make}</option>
+            <option key={make} value={make} />
           ))}
-        </select>
+        </datalist>
       </div>
       
       <div className={styles.formGroup}>
         <label>Model *</label>
-        <select
+        <input
+          type="text"
+          list="model-list"
           value={formData.model}
           onChange={(e) => handleInputChange('model', e.target.value)}
+          placeholder="Select or type model"
           disabled={!formData.make}
           required
-        >
-          <option value="">Select Model</option>
+        />
+        <datalist id="model-list">
           {availableModels.map(model => (
-            <option key={model} value={model}>{model}</option>
+            <option key={model} value={model} />
           ))}
-        </select>
+        </datalist>
       </div>
       
       <div className={styles.formGroup}>
@@ -266,20 +297,23 @@ export default function QuotationForm() {
       
       <div className={styles.formGroup}>
         <label>City *</label>
-        <select
+        <input
+          type="text"
+          list="city-list"
           value={formData.city}
           onChange={(e) => handleInputChange('city', e.target.value)}
+          placeholder="Select or type city"
           required
-        >
-          <option value="">Select City</option>
+        />
+        <datalist id="city-list">
           {vehicleData.cities.map(city => (
-            <option key={city} value={city}>{city}</option>
+            <option key={city} value={city} />
           ))}
-        </select>
+        </datalist>
       </div>
       
       <div className={styles.formGroup}>
-        <label>Sum Insured (PKR) *</label>
+        <label>Sum Insured / Market Value (PKR) *</label>
         <input
           type="number"
           value={formData.sumInsured || ''}
@@ -511,6 +545,11 @@ export default function QuotationForm() {
             
             <div className={styles.quotationDetails}>
               <div className={styles.detailRow}>
+                <span>Sum Insured / Market Value:</span>
+                <span>PKR {formData.sumInsured.toLocaleString()}</span>
+              </div>
+              
+              <div className={styles.detailRow}>
                 <span>Base Premium:</span>
                 <span>PKR {quotation.basePremium.toLocaleString()}</span>
               </div>
@@ -568,10 +607,10 @@ export default function QuotationForm() {
         <h2>Quotation Request Submitted Successfully!</h2>
         
         <div className={styles.referenceNumberBox}>
-          <p className={styles.referenceLabel}>Your Reference Number:</p>
+          <p className={styles.referenceLabel}>Ref:</p>
           <p className={styles.referenceNumber}>{referenceNumber}</p>
           <p className={styles.referenceNote}>
-            Please save this reference number for future correspondence.
+            Please save this number for future correspondence.
           </p>
         </div>
         
@@ -597,6 +636,9 @@ export default function QuotationForm() {
   return (
     <div className={styles.container}>
       <div className={styles.formWrapper}>
+        <div className={styles.logoContainer}>
+          <img src="/logo.png" alt="Company Logo" className={styles.logo} />
+        </div>
         <div className={styles.progressBar}>
           {[1, 2, 3, 4, 5].map(step => (
             <div

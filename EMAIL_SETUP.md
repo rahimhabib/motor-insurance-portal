@@ -229,3 +229,4 @@ For issues or questions:
 - Review error messages in console
 - Test with a simple email first before integrating
 
+

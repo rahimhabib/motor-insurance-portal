@@ -8,16 +8,18 @@
 import { LeadData } from './notifications';
 
 // Email configuration - Set these in your .env.local file
-const EMAIL_CONFIG = {
-  // Internal team email
-  TEAM_EMAIL: process.env.TEAM_EMAIL || 'motor-team@insurancecompany.com',
-  
-  // Email service configuration
-  SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
-  SMTP_PORT: parseInt(process.env.SMTP_PORT || '587'),
-  SMTP_USER: process.env.SMTP_USER || '',
-  SMTP_PASSWORD: process.env.SMTP_PASSWORD || '',
-  SMTP_FROM: process.env.SMTP_FROM || 'noreply@insurancecompany.com',
+// Read dynamically to ensure latest env vars are used
+function getEmailConfig() {
+  return {
+    // Internal team email
+    TEAM_EMAIL: process.env.TEAM_EMAIL || 'motor-team@insurancecompany.com',
+    
+    // Email service configuration
+    SMTP_HOST: process.env.SMTP_HOST || 'smtp.gmail.com',
+    SMTP_PORT: parseInt(process.env.SMTP_PORT || '587'),
+    SMTP_USER: process.env.SMTP_USER || '',
+    SMTP_PASSWORD: process.env.SMTP_PASSWORD || '',
+    SMTP_FROM: process.env.SMTP_FROM || 'noreply@insurancecompany.com',
   
   // SendGrid API Key (if using SendGrid)
   SENDGRID_API_KEY: process.env.SENDGRID_API_KEY || '',
@@ -27,9 +29,12 @@ const EMAIL_CONFIG = {
   AWS_ACCESS_KEY: process.env.AWS_ACCESS_KEY || '',
   AWS_SECRET_KEY: process.env.AWS_SECRET_KEY || '',
   
-  // Resend API Key (if using Resend)
-  RESEND_API_KEY: process.env.RESEND_API_KEY || '',
-};
+    // Resend API Key (if using Resend)
+    RESEND_API_KEY: process.env.RESEND_API_KEY || '',
+  };
+}
+
+const EMAIL_CONFIG = getEmailConfig();
 
 /**
  * Send email to internal team
@@ -37,48 +42,15 @@ const EMAIL_CONFIG = {
 export async function sendEmailToTeam(leadData: LeadData): Promise<boolean> {
   try {
     const emailContent = formatTeamEmail(leadData);
+    const config = getEmailConfig();
     
-    // Choose your email provider (uncomment one):
-    
-    // Option 1: Using Nodemailer (most common, works with Gmail, Outlook, etc.)
-    // return await sendWithNodemailer({
-    //   to: EMAIL_CONFIG.TEAM_EMAIL,
-    //   subject: `New Motor Insurance Lead - ${leadData.referenceNumber}`,
-    //   html: emailContent.html,
-    //   text: emailContent.text,
-    // });
-    
-    // Option 2: Using SendGrid
-    // return await sendWithSendGrid({
-    //   to: EMAIL_CONFIG.TEAM_EMAIL,
-    //   subject: `New Motor Insurance Lead - ${leadData.referenceNumber}`,
-    //   html: emailContent.html,
-    //   text: emailContent.text,
-    // });
-    
-    // Option 3: Using AWS SES
-    // return await sendWithAWSSES({
-    //   to: EMAIL_CONFIG.TEAM_EMAIL,
-    //   subject: `New Motor Insurance Lead - ${leadData.referenceNumber}`,
-    //   html: emailContent.html,
-    //   text: emailContent.text,
-    // });
-    
-    // Option 4: Using Resend (modern, simple)
-    // return await sendWithResend({
-    //   to: EMAIL_CONFIG.TEAM_EMAIL,
-    //   subject: `New Motor Insurance Lead - ${leadData.referenceNumber}`,
-    //   html: emailContent.html,
-    // });
-    
-    // For now, log to console (development mode)
-    console.log('📧 Email to Team:', {
-      to: EMAIL_CONFIG.TEAM_EMAIL,
+    // Using Nodemailer (most common, works with Gmail, Outlook, etc.)
+    return await sendWithNodemailer({
+      to: config.TEAM_EMAIL,
       subject: `New Motor Insurance Lead - ${leadData.referenceNumber}`,
-      body: emailContent.text,
+      html: emailContent.html,
+      text: emailContent.text,
     });
-    
-    return true;
   } catch (error) {
     console.error('Failed to send email to team:', error);
     return false;
@@ -98,15 +70,13 @@ export async function sendEmailToCustomer(leadData: LeadData): Promise<boolean> 
     
     const emailContent = formatCustomerEmail(leadData);
     
-    // Choose your email provider (same as above)
-    // For now, log to console (development mode)
-    console.log('📧 Email to Customer:', {
+    // Using Nodemailer
+    return await sendWithNodemailer({
       to: leadData.customerDetails.email,
       subject: `Your Motor Insurance Quotation - ${leadData.referenceNumber}`,
-      body: emailContent.text,
+      html: emailContent.html,
+      text: emailContent.text,
     });
-    
-    return true;
   } catch (error) {
     console.error('Failed to send email to customer:', error);
     return false;
@@ -140,7 +110,7 @@ function formatTeamEmail(lead: LeadData) {
           <h2>🚗 New Motor Insurance Lead</h2>
         </div>
         <div class="content">
-          <div class="reference">Reference: ${lead.referenceNumber}</div>
+          <div class="reference">Ref: ${lead.referenceNumber}</div>
           
           <div class="section">
             <h3>Lead Information</h3>
@@ -155,7 +125,7 @@ function formatTeamEmail(lead: LeadData) {
             <div class="detail-row"><span class="label">Model:</span> <span>${lead.vehicleDetails.model}</span></div>
             <div class="detail-row"><span class="label">Year:</span> <span>${lead.vehicleDetails.modelYear}</span></div>
             <div class="detail-row"><span class="label">City:</span> <span>${lead.vehicleDetails.city}</span></div>
-            <div class="detail-row"><span class="label">Sum Insured:</span> <span>PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}</span></div>
+            <div class="detail-row"><span class="label">Sum Insured / Market Value:</span> <span>PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}</span></div>
           </div>
           
           <div class="section">
@@ -206,7 +176,7 @@ VEHICLE DETAILS:
 - Model: ${lead.vehicleDetails.model}
 - Year: ${lead.vehicleDetails.modelYear}
 - City: ${lead.vehicleDetails.city}
-- Sum Insured: PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}
+- Sum Insured / Market Value: PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}
 
 CUSTOMER DETAILS:
 - Name: ${lead.customerDetails.fullName}
@@ -266,7 +236,7 @@ function formatCustomerEmail(lead: LeadData) {
         </div>
         <div class="content">
           <div class="reference-box">
-            <p style="margin: 0 0 10px 0; color: #666;">Your Reference Number:</p>
+            <p style="margin: 0 0 10px 0; color: #666;">Ref:</p>
             <div class="reference-number">${lead.referenceNumber}</div>
             <p style="margin: 10px 0 0 0; font-size: 14px; color: #666;">Please save this number for future reference</p>
           </div>
@@ -279,7 +249,7 @@ function formatCustomerEmail(lead: LeadData) {
             <div class="detail"><strong>Vehicle:</strong> ${lead.vehicleDetails.make} ${lead.vehicleDetails.model} (${lead.vehicleDetails.modelYear})</div>
             <div class="detail"><strong>Coverage Type:</strong> ${lead.coverageType}</div>
             <div class="detail"><strong>City:</strong> ${lead.vehicleDetails.city}</div>
-            <div class="detail"><strong>Sum Insured:</strong> PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}</div>
+            <div class="detail"><strong>Sum Insured / Market Value:</strong> PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}</div>
           </div>
           
           <div class="premium">
@@ -329,7 +299,7 @@ Thank You for Your Interest!
 
 Your Motor Insurance Quotation Request
 
-Reference Number: ${lead.referenceNumber}
+Ref: ${lead.referenceNumber}
 (Please save this number for future reference)
 
 Dear ${lead.customerDetails.fullName},
@@ -340,7 +310,7 @@ QUOTATION SUMMARY:
 - Vehicle: ${lead.vehicleDetails.make} ${lead.vehicleDetails.model} (${lead.vehicleDetails.modelYear})
 - Coverage Type: ${lead.coverageType}
 - City: ${lead.vehicleDetails.city}
-- Sum Insured: PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}
+- Sum Insured / Market Value: PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}
 
 Estimated Annual Premium: PKR ${lead.quotation.totalPremium.toLocaleString()}
 
@@ -379,31 +349,82 @@ This is an automated email from Motor Insurance Portal
  * Install: npm install nodemailer
  * Install types: npm install --save-dev @types/nodemailer
  */
-/*
 import nodemailer from 'nodemailer';
 
 async function sendWithNodemailer(options: { to: string; subject: string; html: string; text: string }): Promise<boolean> {
-  const transporter = nodemailer.createTransport({
-    host: EMAIL_CONFIG.SMTP_HOST,
-    port: EMAIL_CONFIG.SMTP_PORT,
-    secure: EMAIL_CONFIG.SMTP_PORT === 465, // true for 465, false for other ports
-    auth: {
-      user: EMAIL_CONFIG.SMTP_USER,
-      pass: EMAIL_CONFIG.SMTP_PASSWORD,
-    },
-  });
+  // Read config dynamically to get latest env vars
+  const config = getEmailConfig();
+  
+  // Debug: Log actual env var values
+  console.log('🔍 Environment Variables Check:');
+  console.log('  SMTP_HOST:', process.env.SMTP_HOST || '(not set)');
+  console.log('  SMTP_PORT:', process.env.SMTP_PORT || '(not set)');
+  console.log('  SMTP_USER:', process.env.SMTP_USER || '(not set)');
+  console.log('  SMTP_PASSWORD:', process.env.SMTP_PASSWORD ? '***set***' : '(not set)');
+  console.log('  SMTP_FROM:', process.env.SMTP_FROM || '(not set)');
+  console.log('  TEAM_EMAIL:', process.env.TEAM_EMAIL || '(not set)');
+  
+  // Check if email credentials are configured
+  if (!config.SMTP_USER || !config.SMTP_PASSWORD) {
+    console.warn('⚠️ Email not configured: SMTP_USER and SMTP_PASSWORD must be set in .env.local');
+    console.log('📧 Email would be sent to:', options.to);
+    console.log('📧 Subject:', options.subject);
+    console.log('📧 Current SMTP_USER:', config.SMTP_USER || '(empty)');
+    console.log('📧 Current SMTP_PASSWORD:', config.SMTP_PASSWORD ? '(set)' : '(empty)');
+    return false;
+  }
 
-  const info = await transporter.sendMail({
-    from: EMAIL_CONFIG.SMTP_FROM,
-    to: options.to,
-    subject: options.subject,
-    text: options.text,
-    html: options.html,
-  });
+  try {
+    console.log('📧 Attempting to send email...');
+    console.log('📧 To:', options.to);
+    console.log('📧 From:', config.SMTP_FROM);
+    console.log('📧 SMTP Host:', config.SMTP_HOST);
+    console.log('📧 SMTP Port:', config.SMTP_PORT);
+    console.log('📧 SMTP User:', config.SMTP_USER);
+    
+    const transporter = nodemailer.createTransport({
+      host: config.SMTP_HOST,
+      port: config.SMTP_PORT,
+      secure: config.SMTP_PORT === 465, // true for 465, false for other ports
+      auth: {
+        user: config.SMTP_USER,
+        pass: config.SMTP_PASSWORD,
+      },
+      tls: {
+        rejectUnauthorized: false // For development/testing only
+      }
+    });
 
-  return !!info.messageId;
+    // Verify transporter connection
+    await transporter.verify();
+    console.log('✅ SMTP connection verified');
+
+    const info = await transporter.sendMail({
+      from: config.SMTP_FROM,
+      to: options.to,
+      subject: options.subject,
+      text: options.text,
+      html: options.html,
+    });
+
+    console.log('✅ Email sent successfully!');
+    console.log('✅ Message ID:', info.messageId);
+    console.log('✅ Response:', info.response);
+    return !!info.messageId;
+  } catch (error: any) {
+    console.error('❌ Failed to send email:', error.message || error);
+    if (error.code) {
+      console.error('❌ Error code:', error.code);
+    }
+    if (error.response) {
+      console.error('❌ SMTP response:', error.response);
+    }
+    if (error.command) {
+      console.error('❌ Failed command:', error.command);
+    }
+    return false;
+  }
 }
-*/
 
 /**
  * Send email using SendGrid
@@ -489,4 +510,5 @@ async function sendWithResend(options: { to: string; subject: string; html: stri
   return true;
 }
 */
+
 

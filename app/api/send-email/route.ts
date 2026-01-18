@@ -10,13 +10,17 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const { type, leadData } = body;
 
+    console.log('📧 Email API called:', { type, to: type === 'team' ? leadData?.referenceNumber : leadData?.customerDetails?.email });
+
     if (type === 'team') {
       // Send email to internal team
       const result = await sendEmailToTeam(leadData);
+      console.log('📧 Team email result:', result);
       return NextResponse.json({ success: result });
     } else if (type === 'customer') {
       // Send email to customer
       const result = await sendEmailToCustomer(leadData);
+      console.log('📧 Customer email result:', result);
       return NextResponse.json({ success: result });
     } else {
       return NextResponse.json(
@@ -24,12 +28,17 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
-  } catch (error) {
-    console.error('Email API error:', error);
+  } catch (error: any) {
+    console.error('❌ Email API error:', error);
+    console.error('❌ Error details:', {
+      message: error?.message,
+      stack: error?.stack,
+    });
     return NextResponse.json(
-      { success: false, error: 'Failed to send email' },
+      { success: false, error: error?.message || 'Failed to send email' },
       { status: 500 }
     );
   }
 }
+
 

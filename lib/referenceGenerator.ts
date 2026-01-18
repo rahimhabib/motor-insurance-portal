@@ -47,3 +47,4 @@ export function generateReferenceNumber(): string {
   return `MOT-${datePart}-${timePart}-${randomPart}`;
 }
 
+

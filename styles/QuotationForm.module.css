@@ -16,6 +16,23 @@
   padding: 2rem;
 }
 
+.logoContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.logo {
+  max-width: 200px;
+  max-height: 80px;
+  height: auto;
+  width: auto;
+  object-fit: contain;
+}
+
 .progressBar {
   display: flex;
   justify-content: space-between;
@@ -555,4 +572,5 @@
     width: 100%;
   }
 }
+
 

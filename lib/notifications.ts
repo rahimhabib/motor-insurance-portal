@@ -7,6 +7,7 @@
 export interface LeadData {
   referenceNumber: string;
   vehicleDetails: {
+    vehicleType?: string;
     make: string;
     model: string;
     modelYear: number;
@@ -128,7 +129,7 @@ function formatEmailBody(lead: LeadData): string {
   return `
 New Motor Insurance Lead Generated
 
-Reference Number: ${lead.referenceNumber}
+Ref: ${lead.referenceNumber}
 Status: ${lead.status}
 Assigned To: ${lead.assignedTo}
 Generated At: ${lead.timestamp}
@@ -138,7 +139,7 @@ VEHICLE DETAILS:
 - Model: ${lead.vehicleDetails.model}
 - Year: ${lead.vehicleDetails.modelYear}
 - City: ${lead.vehicleDetails.city}
-- Sum Insured: PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}
+- Sum Insured / Market Value: PKR ${lead.vehicleDetails.sumInsured.toLocaleString()}
 
 CUSTOMER DETAILS:
 - Name: ${lead.customerDetails.fullName}
